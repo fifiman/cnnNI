@@ -1,5 +1,8 @@
-from keras.datasets import mnist
 from keras.utils import np_utils
+import scipy.io
+import numpy as np
+
+np.random.seed(0)
 
 
 def load_data():
@@ -7,20 +10,39 @@ def load_data():
     rows, cols = 28, 28
     nb_classes = 10
 
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+    DATA_DIR = 'notMNIST_small.mat'
+    mat = scipy.io.loadmat(DATA_DIR)
+
+    X = mat['images']
+    Y = mat['labels']
+
+    # Move last column to front
+    X = np.rollaxis(X, 2)
 
     # Reshape and format input
-    X_train = X_train.reshape(X_train.shape[0], 1, rows, cols)
-    X_test = X_test.reshape(X_test.shape[0], 1, rows, cols)
-
-    X_train = X_train.astype('float32')
-    X_test = X_test.astype('float32')
-
-    X_train /= 255.0
-    X_test /= 255.0
+    X = X.reshape(X.shape[0], 1, rows, cols)
+    X = X.astype('float32')
+    X /= 255.0
 
     # Hot encoding
-    y_train = np_utils.to_categorical(y_train, nb_classes)
-    y_test = np_utils.to_categorical(y_test, nb_classes)
+    Y = Y.astype(int)
+    Y = np_utils.to_categorical(Y, nb_classes)
 
-    return (X_train, y_train, X_test, y_test)
+    # Divide into test and train sets
+    perm = np.random.permutation(X.shape[0])
+
+    train_size = 13000
+
+    X_train = X[perm[:train_size]]
+    X_test = X[perm[train_size:]]
+
+    Y_train = Y[perm[:train_size]]
+    Y_test = Y[perm[train_size:]]
+
+    return (X_train, Y_train, X_test, Y_test)
+
+
+if __name__ == '__main__':
+
+    load_data()
+    pass
